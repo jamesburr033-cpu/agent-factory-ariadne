@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+memory/agent_runs.jsonl
+memory/screenshots/
+memory/failed_actions.jsonl
