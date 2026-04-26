@@ -13,7 +13,7 @@ from .observers.screen_understanding import ScreenUnderstandingAnalyzer
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run Ariadne Master Agent v0.2")
     parser.add_argument("task", nargs="?", default="Help me evaluate an RTX 3090 GPU listing")
-    parser.add_argument("--mode", choices=["advisor", "assisted_fill", "demo", "screen_observe", "screen_understand"], default="advisor")
+    parser.add_argument("--mode", choices=["advisor", "assisted_fill", "demo", "screen_observe", "screen_understand", "screen_pipeline"], default="advisor")
     parser.add_argument("--screenshot", default=None)
     parser.add_argument(
         "--latest-screen",
@@ -66,9 +66,39 @@ def _load_screen_metadata(screenshot_path: str) -> dict:
     except Exception:
         return {}
 
+def _run_screen_pipeline(observe_delay: float = 0) -> dict:
+    if observe_delay > 0:
+        time.sleep(observe_delay)
+
+    observation_artifact = run_mode("screen_observe")
+    observation_data = observation_artifact.to_dict()
+
+    screenshot_path = observation_data.get("screenshot_path")
+
+    if screenshot_path:
+        understanding_artifact = ScreenUnderstandingAnalyzer().analyze(
+            screenshot_path,
+            metadata=_load_screen_metadata(screenshot_path),
+        )
+        understanding_data = understanding_artifact.to_dict()
+    else:
+        understanding_data = None
+
+    return {
+        "pipeline": "screen_pipeline",
+        "observation": observation_data,
+        "understanding": understanding_data,
+        "executable_actions": [],
+    }
+
 
 def main() -> None:
     args = build_parser().parse_args()
+
+    if args.mode == "screen_pipeline":
+        result = _run_screen_pipeline(observe_delay=args.observe_delay)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        return
 
     if args.mode == "screen_understand":
         if args.latest_screen:
