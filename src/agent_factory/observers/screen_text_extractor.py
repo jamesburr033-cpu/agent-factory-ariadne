@@ -18,6 +18,7 @@ class OcrTextResult:
     ocr_scope: str = "full_screen"
     limitations: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
+    text_quality: dict[str, Any] = field(default_factory=dict)
     executable_actions: list[dict[str, str]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -48,6 +49,7 @@ class OcrTextExtractor:
                 engine="none",
                 ocr_scope=ocr_scope,
                 limitations=["Screenshot file does not exist."],
+                text_quality=self.score_text_quality(None),
                 executable_actions=[],
             )
 
@@ -66,6 +68,7 @@ class OcrTextExtractor:
                     "OCR dependencies are not installed or not available.",
                     "Install Tesseract OCR and pytesseract to enable text extraction.",
                 ],
+                text_quality=self.score_text_quality(None),
                 executable_actions=[],
             )
 
@@ -85,6 +88,7 @@ class OcrTextExtractor:
                 engine="pytesseract",
                 ocr_scope=ocr_scope,
                 limitations=[f"OCR failed safely: {exc}"],
+                text_quality=self.score_text_quality(None),
                 executable_actions=[],
             )
 
@@ -99,16 +103,18 @@ class OcrTextExtractor:
                 cleaned_observed_text=None,
                 ocr_scope=ocr_scope,
                 limitations=["OCR ran but found no visible text."],
+                text_quality=self.score_text_quality(None),
                 executable_actions=[],
             )
 
         cleaned_text = self.clean_text(raw_text)
+        text_quality = self.score_text_quality(cleaned_text)
 
         return OcrTextResult(
             screenshot_path=str(path),
             screenshot_exists=True,
             observed_text=cleaned_text,
-            confidence="medium" if cleaned_text else "low",
+            confidence=self._confidence_from_quality(text_quality),
             engine="pytesseract",
             raw_observed_text=raw_text,
             cleaned_observed_text=cleaned_text,
@@ -121,6 +127,7 @@ class OcrTextExtractor:
                 "cleaned_line_count": len([line for line in (cleaned_text or "").splitlines() if line.strip()]),
                 "crop_box": crop_box,
             },
+            text_quality=text_quality,
             executable_actions=[],
         )
 
@@ -153,6 +160,79 @@ class OcrTextExtractor:
 
         cleaned = "\n".join(lines).strip()
         return cleaned or None
+
+    def score_text_quality(self, text: Optional[str]) -> dict[str, Any]:
+        if not text:
+            return {
+                "score": 0.0,
+                "rating": "unavailable",
+                "warnings": ["No cleaned OCR text available."],
+            }
+
+        warnings: list[str] = []
+        total_chars = len(text)
+        alpha_chars = sum(char.isalpha() for char in text)
+        digit_chars = sum(char.isdigit() for char in text)
+        symbol_chars = sum(not char.isalnum() and not char.isspace() for char in text)
+        lines = [line for line in text.splitlines() if line.strip()]
+        alpha_ratio = alpha_chars / max(total_chars, 1)
+        symbol_ratio = symbol_chars / max(total_chars, 1)
+
+        score = 1.0
+
+        if total_chars < 20:
+            score -= 0.25
+            warnings.append("Very short OCR text.")
+
+        if alpha_ratio < 0.45:
+            score -= 0.30
+            warnings.append("Low alphabetic character ratio.")
+
+        if symbol_ratio > 0.25:
+            score -= 0.25
+            warnings.append("High symbol noise ratio.")
+
+        if any(token in text for token in ["\\", "|", "[]", "@@"]):
+            score -= 0.15
+            warnings.append("Possible OCR substitutions or UI noise detected.")
+
+        if len(lines) > 25:
+            score -= 0.10
+            warnings.append("Large multi-line OCR output may include unrelated UI text.")
+
+        if warnings:
+            score = min(score, 0.79)
+
+        score = round(max(0.0, min(1.0, score)), 2)
+
+        if score >= 0.80:
+            rating = "good"
+        elif score >= 0.55:
+            rating = "usable"
+        elif score >= 0.30:
+            rating = "noisy"
+        else:
+            rating = "poor"
+
+        return {
+            "score": score,
+            "rating": rating,
+            "warnings": warnings,
+            "character_count": total_chars,
+            "line_count": len(lines),
+            "alpha_ratio": round(alpha_ratio, 2),
+            "symbol_ratio": round(symbol_ratio, 2),
+            "digit_count": digit_chars,
+        }
+
+    def _confidence_from_quality(self, text_quality: dict[str, Any]) -> str:
+        rating = text_quality.get("rating")
+
+        if rating == "good":
+            return "high"
+        if rating == "usable":
+            return "medium"
+        return "low"
 
     def _normalize_line(self, line: str) -> str:
         line = line.replace("“", '"').replace("”", '"').replace("’", "'")
