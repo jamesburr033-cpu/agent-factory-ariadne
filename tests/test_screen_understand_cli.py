@@ -44,4 +44,4 @@ def test_screen_understand_cli_requires_screenshot(monkeypatch):
     with pytest.raises(SystemExit) as excinfo:
         main()
 
-    assert "--screenshot is required" in str(excinfo.value)
+    assert "--screenshot or --latest-screen is required" in str(excinfo.value)

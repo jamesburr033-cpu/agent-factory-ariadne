@@ -16,6 +16,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--mode", choices=["advisor", "assisted_fill", "demo", "screen_observe", "screen_understand"], default="advisor")
     parser.add_argument("--screenshot", default=None)
     parser.add_argument(
+        "--latest-screen",
+        action="store_true",
+        help="Use the most recent screenshot artifact from memory/screen_observations.",
+    )
+    parser.add_argument(
         "--execute-demo-form",
         action="store_true",
         help="Fill the local GPU Deal Evaluator demo form with Playwright. Never submits.",
@@ -27,6 +32,25 @@ def build_parser() -> argparse.ArgumentParser:
         help="Seconds to wait before screen_observe captures the active window.",
     )
     return parser
+def _find_latest_screen(observation_dir: str = "memory/screen_observations") -> str:
+    from pathlib import Path
+
+    root = Path(observation_dir)
+
+    if not root.exists():
+        raise SystemExit("No screen observation directory found. Run screen_observe first.")
+
+    screenshots = sorted(
+        root.glob("*.png"),
+        key=lambda item: item.stat().st_mtime,
+        reverse=True,
+    )
+
+    if not screenshots:
+        raise SystemExit("No screen observation screenshots found. Run screen_observe first.")
+
+    return str(screenshots[0])
+
 
 def _load_screen_metadata(screenshot_path: str) -> dict:
     from pathlib import Path
@@ -47,8 +71,11 @@ def main() -> None:
     args = build_parser().parse_args()
 
     if args.mode == "screen_understand":
+        if args.latest_screen:
+            args.screenshot = _find_latest_screen()
+
         if not args.screenshot:
-            raise SystemExit("--screenshot is required for screen_understand mode.")
+            raise SystemExit("--screenshot or --latest-screen is required for screen_understand mode.")
 
         artifact = ScreenUnderstandingAnalyzer().analyze(
             args.screenshot,
