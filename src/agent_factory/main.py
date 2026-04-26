@@ -145,8 +145,13 @@ def main() -> None:
                 args.screenshot,
                 crop_box=_active_window_crop_box(metadata),
             )
-            data["observed_text"] = text_result.observed_text
-            data["text_extraction"] = text_result.to_dict()
+            text_data = text_result.to_dict()
+            best_observed_text = text_data.get("best_observed_text") or text_data.get("observed_text")
+
+            data["observed_text"] = best_observed_text
+            data["best_observed_text"] = best_observed_text
+            data["text_quality"] = text_data.get("text_quality", {})
+            data["text_extraction"] = text_data
 
         print(json.dumps(data, indent=2, ensure_ascii=False))
         return
