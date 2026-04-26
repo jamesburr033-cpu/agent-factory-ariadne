@@ -1,0 +1,9 @@
+{
+  "text": "Help me fill a ServiceNow ticket draft for a FOTO integration issue.",
+  "mode": "assisted_fill",
+  "screenshot_path": null,
+  "metadata": {
+    "environment": "draft_only",
+    "submit_allowed": false
+  }
+}

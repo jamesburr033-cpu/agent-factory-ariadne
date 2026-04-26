@@ -1,0 +1,58 @@
+agents:
+  screen_advisor_agent:
+    display_name: "Screen Advisor Agent"
+    purpose: "Analyze screenshots or described screen context and recommend safe next actions."
+    allowed_tools:
+      - screenshot_tool
+    forbidden_actions:
+      - click
+      - type
+      - submit
+      - save
+      - send
+      - delete
+
+  browser_agent:
+    display_name: "Browser Agent"
+    purpose: "Use browser automation in test/demo mode to search, compare, draft, and fill safe forms."
+    allowed_tools:
+      - playwright_executor
+    requires_approval_for:
+      - submit_form
+      - send_message
+      - purchase_item
+      - login
+
+  windows_app_agent:
+    display_name: "Windows App Agent"
+    purpose: "Interact with approved Windows applications through controlled UI automation. Disabled in v0.1."
+    allowed_tools: []
+    requires_approval_for:
+      - save_record
+      - submit_form
+      - delete_data
+      - production_change
+
+  recommendation_agent:
+    display_name: "Recommendation Agent"
+    purpose: "Use approved history and local memory to recommend next actions."
+    allowed_tools:
+      - memory_search_tool
+    forbidden_actions:
+      - external_submission
+
+  self_improvement_agent:
+    display_name: "Self-Improvement Agent"
+    purpose: "Analyze failures and propose improvements. Cannot apply changes directly."
+    allowed_tools:
+      - memory_search_tool
+    requires_approval_for:
+      - modify_code
+      - change_approval_rules
+      - add_tool
+      - update_agent_prompt
+
+  tron:
+    display_name: "Tron"
+    purpose: "Critic and safety review agent. Reviews proposed actions for risk, unsupported assumptions, and approval needs."
+    allowed_tools: []

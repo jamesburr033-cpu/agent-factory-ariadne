@@ -1,0 +1,9 @@
+{
+  "text": "Help me analyze this Epic build task and identify likely INIs for the change ticket.",
+  "mode": "advisor",
+  "screenshot_path": null,
+  "metadata": {
+    "production_epic_allowed": false,
+    "phi_allowed": false
+  }
+}
