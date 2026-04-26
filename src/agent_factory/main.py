@@ -71,6 +71,24 @@ def _load_screen_metadata(screenshot_path: str) -> dict:
         return json.loads(metadata_path.read_text(encoding="utf-8"))
     except Exception:
         return {}
+def _active_window_crop_box(metadata: dict) -> dict | None:
+    required = [
+        "active_window_left",
+        "active_window_top",
+        "active_window_right",
+        "active_window_bottom",
+    ]
+
+    if not all(metadata.get(key) is not None for key in required):
+        return None
+
+    return {
+        "left": int(metadata["active_window_left"]),
+        "top": int(metadata["active_window_top"]),
+        "right": int(metadata["active_window_right"]),
+        "bottom": int(metadata["active_window_bottom"]),
+    }
+
 
 def _run_screen_pipeline(observe_delay: float = 0) -> dict:
     if observe_delay > 0:
@@ -113,15 +131,20 @@ def main() -> None:
         if not args.screenshot:
             raise SystemExit("--screenshot or --latest-screen is required for screen_understand mode.")
 
+        metadata = _load_screen_metadata(args.screenshot)
+
         artifact = ScreenUnderstandingAnalyzer().analyze(
             args.screenshot,
-            metadata=_load_screen_metadata(args.screenshot),
+            metadata=metadata,
         )
 
         data = artifact.to_dict()
 
         if args.extract_text:
-            text_result = OcrTextExtractor().extract(args.screenshot)
+            text_result = OcrTextExtractor().extract(
+                args.screenshot,
+                crop_box=_active_window_crop_box(metadata),
+            )
             data["observed_text"] = text_result.observed_text
             data["text_extraction"] = text_result.to_dict()
 

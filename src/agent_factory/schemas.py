@@ -199,6 +199,10 @@ class ScreenObservationArtifact:
     tron_safety_review: str
     recommended_observations: list[str]
     executable_actions: list[dict[str, str]]
+    active_window_left: _AriadneOptional[int] = None
+    active_window_top: _AriadneOptional[int] = None
+    active_window_right: _AriadneOptional[int] = None
+    active_window_bottom: _AriadneOptional[int] = None
 
     def to_dict(self) -> dict:
         return {
@@ -210,6 +214,10 @@ class ScreenObservationArtifact:
             "active_window_title": self.active_window_title,
             "process_name": self.process_name,
             "app_name": self.app_name,
+            "active_window_left": self.active_window_left,
+            "active_window_top": self.active_window_top,
+            "active_window_right": self.active_window_right,
+            "active_window_bottom": self.active_window_bottom,
             "blocked_or_limited": self.blocked_or_limited,
             "tron_safety_review": self.tron_safety_review,
             "recommended_observations": self.recommended_observations,

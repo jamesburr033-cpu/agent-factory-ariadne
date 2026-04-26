@@ -15,6 +15,7 @@ class OcrTextResult:
     engine: str
     raw_observed_text: Optional[str] = None
     cleaned_observed_text: Optional[str] = None
+    ocr_scope: str = "full_screen"
     limitations: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
     executable_actions: list[dict[str, str]] = field(default_factory=list)
@@ -30,8 +31,13 @@ class OcrTextExtractor:
     It only attempts to read text from an existing screenshot file.
     """
 
-    def extract(self, screenshot_path: str) -> OcrTextResult:
+    def extract(
+        self,
+        screenshot_path: str,
+        crop_box: Optional[dict[str, int]] = None,
+    ) -> OcrTextResult:
         path = Path(screenshot_path)
+        ocr_scope = "active_window_crop" if crop_box else "full_screen"
 
         if not path.exists():
             return OcrTextResult(
@@ -40,6 +46,7 @@ class OcrTextExtractor:
                 observed_text=None,
                 confidence="low",
                 engine="none",
+                ocr_scope=ocr_scope,
                 limitations=["Screenshot file does not exist."],
                 executable_actions=[],
             )
@@ -54,6 +61,7 @@ class OcrTextExtractor:
                 observed_text=None,
                 confidence="low",
                 engine="none",
+                ocr_scope=ocr_scope,
                 limitations=[
                     "OCR dependencies are not installed or not available.",
                     "Install Tesseract OCR and pytesseract to enable text extraction.",
@@ -63,6 +71,10 @@ class OcrTextExtractor:
 
         try:
             image = Image.open(path)
+
+            if crop_box:
+                image = self._crop_image(image, crop_box)
+
             raw_text = pytesseract.image_to_string(image).strip()
         except Exception as exc:
             return OcrTextResult(
@@ -71,6 +83,7 @@ class OcrTextExtractor:
                 observed_text=None,
                 confidence="low",
                 engine="pytesseract",
+                ocr_scope=ocr_scope,
                 limitations=[f"OCR failed safely: {exc}"],
                 executable_actions=[],
             )
@@ -84,6 +97,7 @@ class OcrTextExtractor:
                 engine="pytesseract",
                 raw_observed_text="",
                 cleaned_observed_text=None,
+                ocr_scope=ocr_scope,
                 limitations=["OCR ran but found no visible text."],
                 executable_actions=[],
             )
@@ -98,15 +112,28 @@ class OcrTextExtractor:
             engine="pytesseract",
             raw_observed_text=raw_text,
             cleaned_observed_text=cleaned_text,
+            ocr_scope=ocr_scope,
             limitations=[] if cleaned_text else ["OCR found text, but cleanup removed all usable content."],
             metadata={
                 "character_count": len(raw_text),
                 "cleaned_character_count": len(cleaned_text or ""),
                 "line_count": len([line for line in raw_text.splitlines() if line.strip()]),
                 "cleaned_line_count": len([line for line in (cleaned_text or "").splitlines() if line.strip()]),
+                "crop_box": crop_box,
             },
             executable_actions=[],
         )
+
+    def _crop_image(self, image: Any, crop_box: dict[str, int]) -> Any:
+        left = max(0, int(crop_box["left"]))
+        top = max(0, int(crop_box["top"]))
+        right = min(image.width, int(crop_box["right"]))
+        bottom = min(image.height, int(crop_box["bottom"]))
+
+        if right <= left or bottom <= top:
+            return image
+
+        return image.crop((left, top, right, bottom))
 
     def clean_text(self, text: str) -> Optional[str]:
         lines: list[str] = []
