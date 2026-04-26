@@ -21,6 +21,10 @@ class FakeObserver:
             app_name="calculator",
             allowlisted=self.allowlisted,
             blocked_reason=None if self.allowlisted else "Active application is not in allowlist; screenshot capture limited.",
+            active_window_left=10,
+            active_window_top=20,
+            active_window_right=1010,
+            active_window_bottom=720,
         )
 
 
@@ -66,3 +70,18 @@ def test_forbidden_actions_are_never_present():
     forbidden = {"click", "type", "send", "submit", "buy", "delete"}
     assert artifact.executable_actions == []
     assert all(action.get("type") not in forbidden for action in artifact.executable_actions)
+
+
+def test_active_window_rectangle_is_preserved():
+    artifact = run_mode("screen_observe", observer=FakeObserver(allowlisted=True), advisor=ScreenAdvisorAgent())
+
+    assert artifact.active_window_left == 10
+    assert artifact.active_window_top == 20
+    assert artifact.active_window_right == 1010
+    assert artifact.active_window_bottom == 720
+
+    data = artifact.to_dict()
+    assert data["active_window_left"] == 10
+    assert data["active_window_top"] == 20
+    assert data["active_window_right"] == 1010
+    assert data["active_window_bottom"] == 720

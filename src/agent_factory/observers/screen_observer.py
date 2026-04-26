@@ -21,6 +21,10 @@ class ScreenObservation:
     app_name: Optional[str]
     allowlisted: bool
     blocked_reason: Optional[str]
+    active_window_left: Optional[int] = None
+    active_window_top: Optional[int] = None
+    active_window_right: Optional[int] = None
+    active_window_bottom: Optional[int] = None
 
 
 class ScreenObserver:
@@ -33,7 +37,7 @@ class ScreenObserver:
         stamp = now.strftime("%Y%m%dT%H%M%SZ")
         timestamp_utc = now.isoformat()
 
-        active_window_title, process_name, app_name = self._active_window_metadata()
+        active_window_title, process_name, app_name, active_rect = self._active_window_metadata()
         allowlist = self._load_allowlist(allowlist_path)
         allowlisted = self._is_allowlisted(app_name, process_name, allowlist)
 
@@ -58,6 +62,10 @@ class ScreenObserver:
             app_name=app_name,
             allowlisted=allowlisted,
             blocked_reason=blocked_reason,
+            active_window_left=active_rect.get("left") if active_rect else None,
+            active_window_top=active_rect.get("top") if active_rect else None,
+            active_window_right=active_rect.get("right") if active_rect else None,
+            active_window_bottom=active_rect.get("bottom") if active_rect else None,
         )
 
         self._write_artifact(stamp, observation)
@@ -75,23 +83,36 @@ class ScreenObserver:
         except Exception:
             return None, None, None
 
-    def _active_window_metadata(self) -> tuple[Optional[str], Optional[str], Optional[str]]:
+    def _active_window_metadata(
+        self,
+    ) -> tuple[Optional[str], Optional[str], Optional[str], Optional[dict[str, int]]]:
         if os.name != "nt":
-            return None, None, None
+            return None, None, None, None
 
         try:
             import ctypes
+            from ctypes import wintypes
 
             user32 = ctypes.windll.user32
             hwnd = user32.GetForegroundWindow()
 
             if not hwnd:
-                return None, None, None
+                return None, None, None, None
 
             length = user32.GetWindowTextLengthW(hwnd)
             buf = ctypes.create_unicode_buffer(length + 1)
             user32.GetWindowTextW(hwnd, buf, length + 1)
             title = buf.value or None
+
+            rect = wintypes.RECT()
+            active_rect = None
+            if user32.GetWindowRect(hwnd, ctypes.byref(rect)):
+                active_rect = {
+                    "left": int(rect.left),
+                    "top": int(rect.top),
+                    "right": int(rect.right),
+                    "bottom": int(rect.bottom),
+                }
 
             pid = ctypes.c_ulong()
             user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
@@ -111,9 +132,9 @@ class ScreenObserver:
             if not app_name and title:
                 app_name = self._infer_app_name_from_title(title)
 
-            return title, process_name, app_name
+            return title, process_name, app_name, active_rect
         except Exception:
-            return None, None, None
+            return None, None, None, None
 
     def _infer_app_name_from_title(self, title: str) -> Optional[str]:
         normalized = title.lower()
