@@ -1,0 +1,17 @@
+domains:
+  - domain: ebay.com
+    mode: read_only
+    notes: "Listing research only. Do not bid, buy, contact, log in, or submit forms."
+  - domain: craigslist.org
+    mode: read_only
+    notes: "Listing research only. Do not contact sellers or submit forms."
+  - domain: offerup.com
+    mode: read_only
+    notes: "Listing research only. Do not log in, contact, buy, or submit forms."
+  - domain: amazon.com
+    mode: read_only
+    notes: "Product research only. Do not add to cart, buy, log in, or submit forms."
+restricted_domains:
+  - domain: facebook.com
+    mode: restricted_read_only
+    notes: "Facebook Marketplace may be viewed only if accessible without login. Do not automate login."

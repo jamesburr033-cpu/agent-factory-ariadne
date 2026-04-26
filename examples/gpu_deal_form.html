@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ariadne GPU Deal Evaluator</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 2rem; background: #f6f7f9; color: #111827; }
+    main { max-width: 850px; margin: 0 auto; background: white; padding: 1.5rem; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    h1 { margin-top: 0; }
+    label { display: block; margin-top: 1rem; font-weight: 700; }
+    input, textarea { width: 100%; padding: .7rem; margin-top: .35rem; border: 1px solid #cfd4dc; border-radius: 10px; font: inherit; box-sizing: border-box; }
+    textarea { min-height: 86px; }
+    .notice { background: #fff7ed; border: 1px solid #fed7aa; padding: .75rem; border-radius: 10px; margin-bottom: 1rem; }
+    button { margin-top: 1rem; padding: .75rem 1rem; border: 0; border-radius: 10px; background: #374151; color: white; font-weight: 700; }
+    button[disabled] { opacity: .55; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Ariadne GPU Deal Evaluator</h1>
+    <div class="notice">
+      Local demo only. Ariadne may fill fields. Tron blocks submit/send/purchase actions.
+    </div>
+    <form id="gpu-deal-form" action="#" method="post">
+      <label for="product">Product</label>
+      <input id="product" name="product" autocomplete="off" />
+
+      <label for="vram">VRAM</label>
+      <input id="vram" name="vram" autocomplete="off" />
+
+      <label for="price">Price</label>
+      <input id="price" name="price" autocomplete="off" />
+
+      <label for="condition">Condition</label>
+      <input id="condition" name="condition" autocomplete="off" />
+
+      <label for="missing_proof">Missing proof</label>
+      <textarea id="missing_proof" name="missing_proof"></textarea>
+
+      <label for="red_flags">Red flags</label>
+      <textarea id="red_flags" name="red_flags"></textarea>
+
+      <label for="recommended_offer">Recommended offer</label>
+      <input id="recommended_offer" name="recommended_offer" autocomplete="off" />
+
+      <label for="draft_message">Draft message</label>
+      <textarea id="draft_message" name="draft_message"></textarea>
+
+      <label for="final_action">Final action</label>
+      <input id="final_action" name="final_action" autocomplete="off" />
+
+      <button id="submit" type="submit" disabled>Submit blocked in v0.2</button>
+    </form>
+  </main>
+</body>
+</html>

@@ -1,0 +1,39 @@
+apps:
+  - name: "GPU Deal Evaluator"
+    aliases:
+      - gpu_deal_evaluator
+      - gpu deal form
+      - local gpu form
+    modes_allowed:
+      - advisor
+      - assisted_fill
+      - demo
+    notes: "Local demo only. No seller contact, no purchase, no external submission."
+
+  - name: "Local Demo Form"
+    aliases:
+      - demo
+      - local_demo
+    modes_allowed:
+      - advisor
+      - assisted_fill
+      - demo
+
+  - name: "ServiceNow"
+    aliases:
+      - servicenow
+      - snow
+    modes_allowed:
+      - advisor
+      - assisted_fill
+    notes: "Draft/fill only. Stop before submit/save. Do not use for v0.2 tests."
+
+  - name: "Browser"
+    aliases:
+      - chrome
+      - edge
+      - browser
+    modes_allowed:
+      - advisor
+      - assisted_fill
+      - demo

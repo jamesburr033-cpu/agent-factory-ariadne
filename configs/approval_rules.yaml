@@ -1,0 +1,84 @@
+default_mode: advisor
+
+blocked_global:
+  - access_phi
+  - production_epic_change_without_governance
+  - silent_self_modification
+  - credential_exfiltration
+  - delete_without_approval
+  - purchase_without_approval
+  - grant_new_permission
+
+actions:
+  read_screen:
+    approval_required: false
+    allowed: true
+
+  suggest_values:
+    approval_required: false
+    allowed: true
+
+  fill_field:
+    approval_required: false
+    allowed: true
+    conditions:
+      - app_is_allowlisted
+      - field_is_allowlisted
+      - mode_is_assisted_fill_or_demo
+
+  click_button:
+    approval_required: false
+    allowed: true
+    conditions:
+      - app_is_allowlisted
+      - button_is_non_consequential
+
+  submit_form:
+    approval_required: true
+    allowed: true
+
+  send_message:
+    approval_required: true
+    allowed: true
+
+  save_record:
+    approval_required: true
+    allowed: true
+
+  delete_data:
+    approval_required: true
+    allowed: true
+
+  purchase_item:
+    approval_required: true
+    allowed: true
+
+  production_epic_change:
+    approval_required: true
+    allowed: false
+
+  access_phi:
+    approval_required: true
+    allowed: false
+
+  modify_code:
+    approval_required: true
+    allowed: true
+    process_required:
+      - create_branch
+      - run_tests
+      - tron_review
+      - human_approval
+
+  change_approval_rules:
+    approval_required: true
+    allowed: true
+    process_required:
+      - create_branch
+      - run_tests
+      - tron_review
+      - human_approval
+
+  grant_new_permission:
+    approval_required: true
+    allowed: false

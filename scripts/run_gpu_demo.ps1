@@ -1,0 +1,1 @@
+python -m agent_factory.main "Help me evaluate an RTX 3090 GPU listing. Price is 650 dollars, 24 GB VRAM, used, local pickup, seller says it works but has not provided benchmarks. Recommend red flags, offer price, and a draft seller message. Do not send anything." --mode demo --execute-demo-form

@@ -1,0 +1,9 @@
+{
+  "text": "Search browser listings for RTX 3090 24GB deals and draft seller messages, but do not send anything.",
+  "mode": "advisor",
+  "screenshot_path": null,
+  "metadata": {
+    "purchase_allowed": false,
+    "message_send_allowed": false
+  }
+}
