@@ -179,3 +179,39 @@ def normalize_path(path: str | None) -> Path | None:
     if not path:
         return None
     return Path(path).expanduser().resolve()
+
+
+from dataclasses import dataclass as _ariadne_dataclass
+from typing import Optional as _AriadneOptional
+
+
+@_ariadne_dataclass
+class ScreenObservationArtifact:
+    screenshot_path: _AriadneOptional[str]
+    timestamp_utc: str
+    machine_name: str
+    width: _AriadneOptional[int]
+    height: _AriadneOptional[int]
+    active_window_title: _AriadneOptional[str]
+    process_name: _AriadneOptional[str]
+    app_name: _AriadneOptional[str]
+    blocked_or_limited: bool
+    tron_safety_review: str
+    recommended_observations: list[str]
+    executable_actions: list[dict[str, str]]
+
+    def to_dict(self) -> dict:
+        return {
+            "screenshot_path": self.screenshot_path,
+            "timestamp_utc": self.timestamp_utc,
+            "machine_name": self.machine_name,
+            "width": self.width,
+            "height": self.height,
+            "active_window_title": self.active_window_title,
+            "process_name": self.process_name,
+            "app_name": self.app_name,
+            "blocked_or_limited": self.blocked_or_limited,
+            "tron_safety_review": self.tron_safety_review,
+            "recommended_observations": self.recommended_observations,
+            "executable_actions": self.executable_actions,
+        }

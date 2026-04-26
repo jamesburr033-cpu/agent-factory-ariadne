@@ -1,6 +1,7 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
-from ..schemas import RecommendedAction, ScreenObservation, UserTask
+from ..observers.screen_observer import ScreenObservation as ObservedScreen
+from ..schemas import RecommendedAction, ScreenObservation, ScreenObservationArtifact, UserTask
 
 
 class ScreenAdvisorAgent:
@@ -91,6 +92,40 @@ class ScreenAdvisorAgent:
             )
         ]
         return observation, actions
+
+    def review_screen_observation(self, observation: ObservedScreen) -> ScreenObservationArtifact:
+        blocked_or_limited = not observation.allowlisted
+
+        notes = ["Read-only screen observation captured."]
+
+        if blocked_or_limited:
+            notes.append("Observation is limited because the active application is not allowlisted.")
+
+        if observation.active_window_title:
+            notes.append(f"Active window: {observation.active_window_title}")
+
+        if observation.app_name:
+            notes.append(f"Detected app: {observation.app_name}")
+
+        tron_review = (
+            "TRON Safety Review: Read-only confirmed. "
+            "No click/type/send/buy/submit/delete actions are permitted."
+        )
+
+        return ScreenObservationArtifact(
+            screenshot_path=observation.screenshot_path,
+            timestamp_utc=observation.timestamp_utc,
+            machine_name=observation.machine_name,
+            width=observation.width,
+            height=observation.height,
+            active_window_title=observation.active_window_title,
+            process_name=observation.process_name,
+            app_name=observation.app_name,
+            blocked_or_limited=blocked_or_limited,
+            tron_safety_review=tron_review,
+            recommended_observations=notes,
+            executable_actions=[],
+        )
 
     def _short_description(self, text: str) -> str:
         cleaned = " ".join(text.strip().split())

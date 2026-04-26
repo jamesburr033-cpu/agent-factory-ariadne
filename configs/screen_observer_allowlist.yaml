@@ -1,0 +1,6 @@
+﻿# Safe apps for read-only screen observation only.
+# Keep this intentionally narrow.
+- notepad
+- notepad++
+- calculator
+- mspaint
