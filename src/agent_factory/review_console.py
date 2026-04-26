@@ -10,6 +10,7 @@ from typing import Any, Literal
 from agent_factory.action_queue import ActionQueue
 from agent_factory.config_loader import MEMORY_DIR
 from agent_factory.pattern_memory import PatternMemory
+from agent_factory.observers.screen_understanding import ScreenUnderstandingArtifact
 from agent_factory.schemas import ActionQueueRecord
 
 
@@ -592,4 +593,27 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def render_screen_understanding(artifact: ScreenUnderstandingArtifact) -> str:
+    observed_text = artifact.observed_text or "<not available>"
+    file_size = artifact.file_size_bytes if artifact.file_size_bytes is not None else "<unknown>"
+
+    lines = [
+        "=== Screen Understanding Artifact ===",
+        f"Screenshot: {artifact.screenshot_path}",
+        f"Screenshot exists: {artifact.screenshot_exists}",
+        f"File size bytes: {file_size}",
+        f"Summary: {artifact.screen_summary}",
+        f"Confidence: {artifact.confidence}",
+        f"Observed text: {observed_text}",
+        "Limitations:",
+    ]
+
+    for limitation in artifact.limitations:
+        lines.append(f"- {limitation}")
+
+    lines.append(f"Executable actions: {artifact.executable_actions}")
+
+    return "\n".join(lines)
 
