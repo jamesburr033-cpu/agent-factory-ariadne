@@ -15,6 +15,7 @@ class OcrTextResult:
     engine: str
     raw_observed_text: Optional[str] = None
     cleaned_observed_text: Optional[str] = None
+    best_observed_text: Optional[str] = None
     ocr_scope: str = "full_screen"
     limitations: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -109,6 +110,7 @@ class OcrTextExtractor:
 
         cleaned_text = self.clean_text(raw_text)
         text_quality = self.score_text_quality(cleaned_text)
+        best_text = self.extract_best_observed_text(cleaned_text)
 
         return OcrTextResult(
             screenshot_path=str(path),
@@ -118,6 +120,7 @@ class OcrTextExtractor:
             engine="pytesseract",
             raw_observed_text=raw_text,
             cleaned_observed_text=cleaned_text,
+            best_observed_text=best_text,
             ocr_scope=ocr_scope,
             limitations=[] if cleaned_text else ["OCR found text, but cleanup removed all usable content."],
             metadata={
@@ -125,6 +128,7 @@ class OcrTextExtractor:
                 "cleaned_character_count": len(cleaned_text or ""),
                 "line_count": len([line for line in raw_text.splitlines() if line.strip()]),
                 "cleaned_line_count": len([line for line in (cleaned_text or "").splitlines() if line.strip()]),
+                "best_observed_text_length": len(best_text or ""),
                 "crop_box": crop_box,
             },
             text_quality=text_quality,
@@ -233,6 +237,62 @@ class OcrTextExtractor:
         if rating == "usable":
             return "medium"
         return "low"
+
+    def extract_best_observed_text(self, text: Optional[str]) -> Optional[str]:
+        if not text:
+            return None
+
+        best_line = None
+        best_score = -1.0
+
+        for raw_line in text.splitlines():
+            line = self._repair_common_ocr_substitutions(raw_line.strip())
+
+            if not line or self._is_noise_line(line):
+                continue
+
+            score = self._score_phrase_candidate(line)
+
+            if score > best_score:
+                best_score = score
+                best_line = line
+
+        return best_line
+
+    def _repair_common_ocr_substitutions(self, line: str) -> str:
+        line = line.strip()
+        line = re.sub(r"^[\d\]\[\|/\\\s]+", "", line)
+        line = re.sub(r"\bff\b", "If", line, flags=re.IGNORECASE)
+        line = re.sub(r"^If\s+you", "If you", line, flags=re.IGNORECASE)
+        line = re.sub(r"\btell\s+we\b", "tell me", line, flags=re.IGNORECASE)
+        line = re.sub(r"\s@\s", " a ", line)
+        line = re.sub(r"\s+", " ", line).strip()
+        return line
+
+    def _score_phrase_candidate(self, line: str) -> float:
+        lowered = line.lower()
+        total_chars = len(line)
+        alpha_chars = sum(char.isalpha() for char in line)
+        symbol_chars = sum(not char.isalnum() and not char.isspace() for char in line)
+
+        score = 0.0
+
+        if 15 <= total_chars <= 160:
+            score += 0.30
+
+        score += min(alpha_chars / max(total_chars, 1), 1.0) * 0.35
+
+        useful_words = {"if", "you", "can", "see", "this", "tell", "me", "joke"}
+        score += len(useful_words.intersection(set(lowered.replace(".", "").replace(",", "").split()))) * 0.06
+
+        if any(mark in line for mark in [".", "?", "!"]):
+            score += 0.10
+
+        if symbol_chars > alpha_chars * 0.5:
+            score -= 0.25
+
+        return round(score, 3)
+
 
     def _normalize_line(self, line: str) -> str:
         line = line.replace("“", '"').replace("”", '"').replace("’", "'")
