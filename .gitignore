@@ -24,3 +24,5 @@ memory/screenshots/
 memory/browser_research_screenshots/
 
 *.egg-info/
+
+memory/
