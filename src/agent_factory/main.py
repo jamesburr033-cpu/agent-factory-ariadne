@@ -8,6 +8,7 @@ from .master_agent import AriadneMasterAgent
 from .orchestrator import run_mode
 from .schemas import UserTask
 from .observers.screen_understanding import ScreenUnderstandingAnalyzer
+from .observers.screen_text_extractor import OcrTextExtractor
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -19,6 +20,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--latest-screen",
         action="store_true",
         help="Use the most recent screenshot artifact from memory/screen_observations.",
+    )
+    parser.add_argument(
+        "--extract-text",
+        action="store_true",
+        help="Attempt read-only OCR text extraction from the selected screenshot artifact.",
     )
     parser.add_argument(
         "--execute-demo-form",
@@ -111,7 +117,15 @@ def main() -> None:
             args.screenshot,
             metadata=_load_screen_metadata(args.screenshot),
         )
-        print(json.dumps(artifact.to_dict(), indent=2, ensure_ascii=False))
+
+        data = artifact.to_dict()
+
+        if args.extract_text:
+            text_result = OcrTextExtractor().extract(args.screenshot)
+            data["observed_text"] = text_result.observed_text
+            data["text_extraction"] = text_result.to_dict()
+
+        print(json.dumps(data, indent=2, ensure_ascii=False))
         return
 
     if args.mode == "screen_observe":
