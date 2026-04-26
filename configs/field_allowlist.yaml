@@ -1,0 +1,31 @@
+fields:
+  GPU Deal Evaluator:
+    - "Product"
+    - "VRAM"
+    - "Price"
+    - "Condition"
+    - "Missing proof"
+    - "Red flags"
+    - "Recommended offer"
+    - "Draft message"
+    - "Final action"
+
+  ServiceNow:
+    - "Short description"
+    - "Description"
+    - "Assignment group"
+    - "Work notes"
+    - "Impact"
+    - "Urgency"
+    - "Category"
+
+  Local Demo Form:
+    - "Name"
+    - "Email"
+    - "Short description"
+    - "Description"
+    - "Notes"
+
+  Browser:
+    - "Search"
+    - "Message draft"

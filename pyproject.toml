@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-factory-ariadne"
+version = "0.6.1"
+description = "Local-first, safety-gated computer-use Master Agent framework for Ariadne."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.0",
+    "PyYAML>=6.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0"
+]
+browser = [
+    "playwright>=1.44"
+]
+ui = [
+    "streamlit>=1.35"
+]
+
+[project.scripts]
+ariadne = "agent_factory.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
