@@ -26,3 +26,5 @@ memory/browser_research_screenshots/
 *.egg-info/
 
 memory/
+
+.pytest_tmp/
