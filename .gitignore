@@ -28,3 +28,6 @@ memory/browser_research_screenshots/
 memory/
 
 .pytest_tmp/
+
+.venv_codex/
+.pytest_tmp_codex/
