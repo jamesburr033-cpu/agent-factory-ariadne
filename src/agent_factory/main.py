@@ -14,7 +14,7 @@ from .observers.screen_text_extractor import OcrTextExtractor
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run Ariadne Master Agent v0.2")
     parser.add_argument("task", nargs="?", default="Help me evaluate an RTX 3090 GPU listing")
-    parser.add_argument("--mode", choices=["advisor", "assisted_fill", "demo", "screen_observe", "screen_understand", "screen_pipeline"], default="advisor")
+    parser.add_argument("--mode", choices=["advisor", "assisted_fill", "demo", "screen_observe", "screen_understand", "screen_pipeline", "screen_pipeline_review"], default="advisor")
     parser.add_argument("--screenshot", default=None)
     parser.add_argument(
         "--latest-screen",
@@ -166,6 +166,85 @@ def _save_screen_pipeline_artifact(
     return str(artifact_path)
 
 
+def _load_screen_pipeline_index_entries(
+    index_path: str = "memory/screen_pipeline_runs/index.jsonl",
+) -> list[dict]:
+    from pathlib import Path
+
+    path = Path(index_path)
+
+    if not path.exists():
+        return []
+
+    entries: list[dict] = []
+
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+
+        try:
+            entries.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+
+    return entries
+
+
+def _latest_screen_pipeline_index_entry(
+    index_path: str = "memory/screen_pipeline_runs/index.jsonl",
+) -> dict | None:
+    entries = _load_screen_pipeline_index_entries(index_path)
+
+    if not entries:
+        return None
+
+    return sorted(
+        entries,
+        key=lambda entry: entry.get("timestamp_utc") or "",
+    )[-1]
+
+
+def _screen_pipeline_review_summary(entry: dict | None) -> str:
+    if not entry:
+        return "No screen pipeline runs found. No executable actions were proposed."
+
+    app_name = entry.get("app_name") or "unknown app"
+    blocked = entry.get("blocked_or_limited")
+    best_text = entry.get("best_observed_text")
+    quality = entry.get("text_quality_rating") or "unavailable"
+    action_count = entry.get("executable_actions_count", 0)
+
+    if blocked:
+        return (
+            f"Latest screen pipeline run observed {app_name}, but the app was blocked or limited. "
+            f"No readable screen text was available. Executable actions proposed: {action_count}."
+        )
+
+    if best_text:
+        return (
+            f"Latest screen pipeline run observed {app_name} and read: \"{best_text}\" "
+            f"Text quality rating: {quality}. Executable actions proposed: {action_count}."
+        )
+
+    return (
+        f"Latest screen pipeline run observed {app_name}, but no best observed text was available. "
+        f"Text quality rating: {quality}. Executable actions proposed: {action_count}."
+    )
+
+
+def _run_screen_pipeline_review(
+    index_path: str = "memory/screen_pipeline_runs/index.jsonl",
+) -> dict:
+    entry = _latest_screen_pipeline_index_entry(index_path)
+
+    return {
+        "mode": "screen_pipeline_review",
+        "review_summary": _screen_pipeline_review_summary(entry),
+        "latest_run": entry,
+        "executable_actions": [],
+    }
+
+
 def _run_screen_pipeline(observe_delay: float = 0, extract_text: bool = False) -> dict:
     if observe_delay > 0:
         time.sleep(observe_delay)
@@ -214,6 +293,11 @@ def _run_screen_pipeline(observe_delay: float = 0, extract_text: bool = False) -
 
 def main() -> None:
     args = build_parser().parse_args()
+
+    if args.mode == "screen_pipeline_review":
+        result = _run_screen_pipeline_review()
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        return
 
     if args.mode == "screen_pipeline":
         result = _run_screen_pipeline(observe_delay=args.observe_delay, extract_text=args.extract_text)
