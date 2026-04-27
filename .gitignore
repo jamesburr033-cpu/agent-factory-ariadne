@@ -31,3 +31,5 @@ memory/
 
 .venv_codex/
 .pytest_tmp_codex/
+memory/screen_pipeline_runs/
+memory/screen_observations/
