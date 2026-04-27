@@ -106,6 +106,42 @@ def _screen_pipeline_run_timestamp(result: dict) -> str:
         return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
+def _screen_pipeline_index_record(result: dict, artifact_path: str) -> dict:
+    observation = result.get("observation") or {}
+    understanding = result.get("understanding") or {}
+    text_quality = understanding.get("text_quality") or {}
+    executable_actions = result.get("executable_actions") or []
+
+    return {
+        "artifact_path": artifact_path,
+        "timestamp_utc": observation.get("timestamp_utc"),
+        "app_name": observation.get("app_name"),
+        "best_observed_text": understanding.get("best_observed_text"),
+        "text_quality_rating": text_quality.get("rating"),
+        "blocked_or_limited": observation.get("blocked_or_limited"),
+        "executable_actions_count": len(executable_actions),
+    }
+
+
+def _append_screen_pipeline_index(
+    result: dict,
+    artifact_path: str,
+    output_dir: str = "memory/screen_pipeline_runs",
+) -> str:
+    from pathlib import Path
+
+    root = Path(output_dir)
+    root.mkdir(parents=True, exist_ok=True)
+
+    index_path = root / "index.jsonl"
+    record = _screen_pipeline_index_record(result, artifact_path)
+
+    with index_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    return str(index_path)
+
+
 def _save_screen_pipeline_artifact(
     result: dict,
     output_dir: str = "memory/screen_pipeline_runs",
@@ -124,6 +160,8 @@ def _save_screen_pipeline_artifact(
         json.dumps(result, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
+
+    _append_screen_pipeline_index(result, str(artifact_path), output_dir=output_dir)
 
     return str(artifact_path)
 
