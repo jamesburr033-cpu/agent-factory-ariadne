@@ -90,7 +90,7 @@ def _active_window_crop_box(metadata: dict) -> dict | None:
     }
 
 
-def _run_screen_pipeline(observe_delay: float = 0) -> dict:
+def _run_screen_pipeline(observe_delay: float = 0, extract_text: bool = False) -> dict:
     if observe_delay > 0:
         time.sleep(observe_delay)
 
@@ -100,11 +100,26 @@ def _run_screen_pipeline(observe_delay: float = 0) -> dict:
     screenshot_path = observation_data.get("screenshot_path")
 
     if screenshot_path:
+        metadata = _load_screen_metadata(screenshot_path)
+
         understanding_artifact = ScreenUnderstandingAnalyzer().analyze(
             screenshot_path,
-            metadata=_load_screen_metadata(screenshot_path),
+            metadata=metadata,
         )
         understanding_data = understanding_artifact.to_dict()
+
+        if extract_text:
+            text_result = OcrTextExtractor().extract(
+                screenshot_path,
+                crop_box=_active_window_crop_box(metadata),
+            )
+            text_data = text_result.to_dict()
+            best_observed_text = text_data.get("best_observed_text") or text_data.get("observed_text")
+
+            understanding_data["observed_text"] = best_observed_text
+            understanding_data["best_observed_text"] = best_observed_text
+            understanding_data["text_quality"] = text_data.get("text_quality", {})
+            understanding_data["text_extraction"] = text_data
     else:
         understanding_data = None
 
@@ -120,7 +135,7 @@ def main() -> None:
     args = build_parser().parse_args()
 
     if args.mode == "screen_pipeline":
-        result = _run_screen_pipeline(observe_delay=args.observe_delay)
+        result = _run_screen_pipeline(observe_delay=args.observe_delay, extract_text=args.extract_text)
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return
 
