@@ -90,6 +90,44 @@ def _active_window_crop_box(metadata: dict) -> dict | None:
     }
 
 
+def _screen_pipeline_run_timestamp(result: dict) -> str:
+    from datetime import datetime, timezone
+
+    timestamp_utc = (result.get("observation") or {}).get("timestamp_utc")
+
+    try:
+        if timestamp_utc:
+            parsed = datetime.fromisoformat(timestamp_utc.replace("Z", "+00:00"))
+        else:
+            parsed = datetime.now(timezone.utc)
+
+        return parsed.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    except Exception:
+        return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def _save_screen_pipeline_artifact(
+    result: dict,
+    output_dir: str = "memory/screen_pipeline_runs",
+) -> str:
+    from pathlib import Path
+
+    root = Path(output_dir)
+    root.mkdir(parents=True, exist_ok=True)
+
+    timestamp = _screen_pipeline_run_timestamp(result)
+    artifact_path = root / f"pipeline_{timestamp}.json"
+
+    result["pipeline_artifact_path"] = str(artifact_path)
+
+    artifact_path.write_text(
+        json.dumps(result, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    return str(artifact_path)
+
+
 def _run_screen_pipeline(observe_delay: float = 0, extract_text: bool = False) -> dict:
     if observe_delay > 0:
         time.sleep(observe_delay)
@@ -123,12 +161,17 @@ def _run_screen_pipeline(observe_delay: float = 0, extract_text: bool = False) -
     else:
         understanding_data = None
 
-    return {
+    result = {
         "pipeline": "screen_pipeline",
         "observation": observation_data,
         "understanding": understanding_data,
         "executable_actions": [],
     }
+
+    if extract_text:
+        _save_screen_pipeline_artifact(result)
+
+    return result
 
 
 def main() -> None:
