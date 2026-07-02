@@ -5,8 +5,13 @@ Local-first, safety-gated Master Agent scaffold for the Lenovo P620 named **Aria
 - **Master Agent:** Ariadne
 - **Critic / Safety Agent:** Tron
 - **Machine:** Lenovo ThinkStation P620 named Ariadne
+- **Core pattern:** local-first automation, human review, explicit approval gates, append-only evidence where practical
 
-## What v0.2 does
+## Current capability summary
+
+Ariadne is being developed as a controlled agent factory, not an unrestricted automation bot. The project is intentionally staged so that each capability adds usefulness without removing human review.
+
+### v0.2, local browser demo
 
 v0.2 adds a safe local browser demo:
 
@@ -19,7 +24,7 @@ v0.2 adds a safe local browser demo:
 - Does **not** use credentials
 - Does **not** touch ServiceNow, Epic, PHI, or work systems
 
-## What v0.3 adds
+### v0.3 and v0.3.1, Human Review Console
 
 v0.3 adds a local Human Review Console. v0.3.1 improves run selection and artifact filtering:
 
@@ -35,7 +40,7 @@ v0.3 adds a local Human Review Console. v0.3.1 improves run selection and artifa
 - Writes lessons to `memory/lessons_learned.jsonl`
 - Does **not** submit forms, send messages, save records, purchase items, access real websites, use credentials, or touch work systems
 
-## What v0.4 adds
+### v0.4 and v0.4.1, review-gated action queue
 
 v0.4 adds a local Review-Gated Action Queue. v0.4.1 improves console labels, controls, and execution audit detail:
 
@@ -49,7 +54,7 @@ v0.4 adds a local Review-Gated Action Queue. v0.4.1 improves console labels, con
 - Logs attempted_by, result, blocked_reason, and Tron final-check result for execution attempts
 - Never executes `submit_form`, `send_message`, `save_record`, `delete_data`, `purchase_item`, credential, deploy, or production actions in v0.4
 
-## What v0.5 adds
+### v0.5 and v0.5.1, read-only browser research
 
 v0.5 adds a read-only browser research sandbox for approved non-work websites. v0.5.1 improves routing and console visibility:
 
@@ -65,10 +70,10 @@ v0.5 adds a read-only browser research sandbox for approved non-work websites. v
 - Adds a Browser Research Runs console filter and prefers the latest browser research run by default
 - Separates Browser Research Artifacts from Browser Demo Artifacts
 - Ignores obvious navigation/header/footer text such as `Skip to main content` when extracting listing titles
-- Queues draft seller messages as pending high-risk actions only; Ariadne does not send them
+- Queues draft seller messages as pending high-risk actions only, Ariadne does not send them
 - Keeps login, credential entry, contact, bid, buy, checkout, submit, captcha bypass, work systems, PHI, and aggressive scraping blocked
 
-## What v0.6 adds
+### v0.6 and v0.6.1, personal workflow memory
 
 v0.6 adds Personal Workflow Memory for approved reusable patterns. v0.6.1 confirms browser research proposed actions are reviewable in the Action Queue:
 
@@ -85,14 +90,38 @@ v0.6 adds Personal Workflow Memory for approved reusable patterns. v0.6.1 confir
 - Does not write new patterns automatically during normal Ariadne runs
 - Patterns inform recommendations only and never authorize sending, buying, submitting, deleting, credential, deployment, or production actions
 
+## Healthcare AI Governance Portfolio
+
+This repository now includes a healthcare AI governance portfolio under [`docs/healthcare-ai-governance/`](docs/healthcare-ai-governance/).
+
+The portfolio is meant to show how Ariadne can support healthcare AI governance work without touching PHI, production Epic, credentials, or live clinical systems.
+
+Included files:
+
+| File | Purpose |
+| --- | --- |
+| [`README.md`](docs/healthcare-ai-governance/README.md) | Overview of the portfolio, scope, principles, and workflow. |
+| [`ai-feature-intake.md`](docs/healthcare-ai-governance/ai-feature-intake.md) | Intake template for Epic AI, vendor AI, or internal healthcare AI workflows. |
+| [`ai-risk-review.md`](docs/healthcare-ai-governance/ai-risk-review.md) | Risk review template covering clinical safety, privacy, security, equity, workflow, revenue integrity, monitoring, and vendor responsibilities. |
+| [`model-monitoring-and-drift.md`](docs/healthcare-ai-governance/model-monitoring-and-drift.md) | Monitoring plan for output quality, safety, feedback, drift, workflow fit, and escalation. |
+| [`evidence-register.md`](docs/healthcare-ai-governance/evidence-register.md) | Evidence tracker for intake, reviews, approvals, monitoring, issues, and follow-up actions. |
+| [`operating-model.md`](docs/healthcare-ai-governance/operating-model.md) | Lightweight ownership model, lifecycle, decision cadence, and escalation triggers. |
+
+Portfolio positioning:
+
+- Demonstrates practical healthcare AI governance thinking
+- Supports AIGP, NIST AI RMF, Epic AI feature review, and internal governance conversations
+- Keeps AI governance work review-gated and evidence-oriented
+- Does not authorize PHI access, production EHR changes, vendor approval, or final legal, privacy, compliance, or clinical decisions
+
 ## Setup
 
 From PowerShell:
 
 ```powershell
-cd C:\AI\agent_factory_ariadne
+cd C:/AI/agent_factory_ariadne
 py -m venv .venv
-.\.venv\Scripts\Activate.ps1
+./.venv/Scripts/Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 python -m pytest
@@ -102,7 +131,7 @@ If PowerShell blocks activation:
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-.\.venv\Scripts\Activate.ps1
+./.venv/Scripts/Activate.ps1
 ```
 
 ## Run the planning-only demo
@@ -138,7 +167,7 @@ Expected behavior:
 
 Allowed without approval:
 
-- Read/summarize task text
+- Read or summarize task text
 - Suggest values
 - Fill allowlisted local demo fields in assisted/demo mode
 
@@ -181,17 +210,46 @@ python -m agent_factory.review_console
 
 The console opens a local Streamlit app bound to `localhost`. Review buttons append JSONL review records and lessons. Queue execution is limited to approved low/medium-risk local demo fill/suggest actions after Tron final check.
 
-v0.4 usage notes:
+View latest audit log:
 
-- Use the filter dropdown to focus on all runs, browser demo runs, self-improvement runs, or runs with high-risk actions.
-- Use the run dropdown to select a specific Ariadne run by timestamp, run ID, task type, selected agent, and short task text.
-- Browser demo artifacts show before/after screenshots only when those exact paths are referenced by the selected run.
-- The Action Queue section shows queued actions for the selected run.
-- Use `Approve action`, `Reject action`, or `Mark needs revision` to record queue review state.
-- `Execute approved local demo action` only records execution for safe local demo fill/suggest actions after approval and Tron final check.
-- Submit, send, save, delete, purchase, credential, deploy, and production actions show a warning and remain blocked.
+```powershell
+Get-Content ./memory/agent_runs.jsonl -Tail 1
+```
 
-v0.4.1 validation steps:
+View screenshots:
+
+```powershell
+dir ./memory/screenshots
+```
+
+View queued actions:
+
+```powershell
+Get-Content ./memory/action_queue.jsonl -Tail 5
+```
+
+View queue events:
+
+```powershell
+Get-Content ./memory/action_queue_events.jsonl -Tail 10
+```
+
+View browser research runs:
+
+```powershell
+Get-Content ./memory/browser_research_runs.jsonl -Tail 5
+```
+
+View pattern memory:
+
+```powershell
+Get-Content ./memory/patterns.jsonl
+Get-Content ./memory/pattern_usage.jsonl -Tail 10
+```
+
+## Validation examples
+
+### v0.4.1 action queue validation
 
 1. Run the local GPU demo plan to create queued actions:
 
@@ -211,10 +269,10 @@ python -m agent_factory.review_console
 6. Check queue events:
 
 ```powershell
-Get-Content .\memory\action_queue_events.jsonl -Tail 10
+Get-Content ./memory/action_queue_events.jsonl -Tail 10
 ```
 
-v0.5 read-only browser research example:
+### v0.5 read-only browser research example
 
 ```powershell
 python -m agent_factory.main "Research this GPU listing read-only: https://www.ebay.com/itm/example" --mode demo
@@ -229,45 +287,7 @@ Expected behavior:
 - Any draft seller message is queued as pending review only
 - No login, contact, send, bid, buy, checkout, submit, credential, or work-system action is executed
 
-View browser research runs:
-
-```powershell
-Get-Content .\memory\browser_research_runs.jsonl -Tail 5
-```
-
-v0.6 pattern memory usage:
-
-```powershell
-Get-Content .\memory\patterns.jsonl
-Get-Content .\memory\pattern_usage.jsonl -Tail 10
-python -m agent_factory.review_console
-```
-
-In the review console, use Pattern Memory controls to promote approved lessons, create manual patterns, or deactivate stale patterns. Normal agent runs only read active patterns and log which patterns influenced recommendations.
-
-v0.6.1 browser research queue validation:
-
-1. Run a read-only browser research task:
-
-```powershell
-python -m agent_factory.main "Read-only research this eBay GPU listing https://www.ebay.com/itm/example" --mode demo
-```
-
-2. Open the Human Review Console:
-
-```powershell
-python -m agent_factory.review_console
-```
-
-3. Select the browser research run and confirm the Action Queue shows a `send_message | Draft seller message | ... | pending | not_executed` record.
-4. Approve the draft seller message if desired. Execution must remain blocked.
-5. Confirm the blocked execution attempt is logged:
-
-```powershell
-Get-Content .\memory\action_queue_events.jsonl -Tail 10
-```
-
-v0.5.1 validation steps:
+### v0.5.1 browser research validation
 
 1. Run a read-only URL task that mentions form submission safety:
 
@@ -275,37 +295,25 @@ v0.5.1 validation steps:
 python -m agent_factory.main "Read-only research this eBay GPU listing https://www.ebay.com/itm/example and do not submit forms" --mode demo
 ```
 
-2. Open the console and choose the `browser research runs` filter:
-
-```powershell
-python -m agent_factory.review_console
-```
-
+2. Open the console and choose the `browser research runs` filter.
 3. Confirm the selected run shows `Browser Research Artifacts` with research metadata, listing fields, Tron review, proposed actions, and any referenced screenshot path.
 4. Confirm `Browser Demo Artifacts` remains separate and does not show older GPU demo screenshots for browser research runs.
 
-View latest audit log:
+### v0.6.1 browser research queue validation
+
+1. Run a read-only browser research task:
 
 ```powershell
-Get-Content .\memory\agent_runs.jsonl -Tail 1
+python -m agent_factory.main "Read-only research this eBay GPU listing https://www.ebay.com/itm/example" --mode demo
 ```
 
-View screenshots:
+2. Open the Human Review Console.
+3. Select the browser research run and confirm the Action Queue shows a `send_message | Draft seller message | ... | pending | not_executed` record.
+4. Approve the draft seller message if desired. Execution must remain blocked.
+5. Confirm the blocked execution attempt is logged:
 
 ```powershell
-dir .\memory\screenshots
-```
-
-View queued actions:
-
-```powershell
-Get-Content .\memory\action_queue.jsonl -Tail 5
-```
-
-View queue events:
-
-```powershell
-Get-Content .\memory\action_queue_events.jsonl -Tail 10
+Get-Content ./memory/action_queue_events.jsonl -Tail 10
 ```
 
 ## v0.6.1 status
