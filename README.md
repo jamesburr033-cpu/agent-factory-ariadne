@@ -1,13 +1,44 @@
 # Ariadne Agent Factory
 
-Local-first, safety-gated Master Agent scaffold for the Lenovo P620 named **Ariadne**.
+**Local AI agents with human review, explicit approval gates, and inspectable evidence.**
 
-- **Master Agent:** Ariadne
-- **Critic / Safety Agent:** Tron
-- **Machine:** Lenovo ThinkStation P620 named Ariadne
-- **Core pattern:** local-first automation, human review, explicit approval gates, append-only evidence where practical
+Ariadne is a personal AI engineering and governance project by **James Burrows**.
+It explores how useful agent workflows can be built around clear responsibility:
+agents propose work, deterministic rules check it, and people retain authority
+over consequential actions. Development runs on a Lenovo ThinkStation P620.
 
-## Current capability summary
+**Project status — September 7, 2026:** active development. The public code is an
+earlier prototype snapshot. Newer local work extends the governance, evaluation,
+and release-readiness layers; that work has not yet been published as a validated
+release. End-to-end validation and UI integration remain incomplete.
+
+## Start here
+
+| If you want to... | Read |
+| --- | --- |
+| See recent progress and what is next | [Development progress](docs/PROGRESS.md) |
+| Review healthcare AI governance work samples | [Governance portfolio](docs/healthcare-ai-governance/README.md) |
+| Inspect task routing and safety review | [Master agent](src/agent_factory/master_agent.py) · [Tron critic](src/agent_factory/agents/tron.py) |
+| Inspect the published review workflow | [Human Review Console](src/agent_factory/review_console.py) · [Action queue](src/agent_factory/action_queue.py) |
+| Explore the published tests | [Test suite](tests/) |
+
+## What the project explores
+
+- **Agent orchestration:** route a task to a specialist and return structured proposals.
+- **Human oversight:** make approval state, reviewer decisions, and unresolved questions visible.
+- **Evidence and evaluation:** retain audit records and test blocked as well as successful paths.
+- **Practical governance:** connect intake, risk review, monitoring, and ownership through reusable work samples.
+
+The stack includes Python, Pydantic, JSONL audit records, pytest, a local Streamlit
+review console, and Playwright for bounded browser demonstrations. Ariadne is the
+coordinator; **Tron** is the critic and safety reviewer.
+
+The [progress report](docs/PROGRESS.md) distinguishes published code, recorded local
+component results, and unfinished work. The reference below describes the earlier
+published prototype and its setup; newer local behavior may differ. The project
+is not certified for production or clinical use.
+
+## Published prototype capability reference
 
 Ariadne is being developed as a controlled agent factory, not an unrestricted automation bot. The project is intentionally staged so that each capability adds usefulness without removing human review.
 
